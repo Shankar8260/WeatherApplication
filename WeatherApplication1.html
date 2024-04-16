@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stylish Weather App</title>
+
+    <!-- Font Awesome library for weather icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* CSS styling for the weather app */
+        body {
+            font-family: 'Roboto', sans-serif; /* Font style set to Roboto */
+            color: white; /* Text color is white for better visibility */
+            margin: 0;
+            padding: 0;
+            text-align: center; /* Center-aligns the content */
+            height: 100vh; /* Full height of the viewport */
+            display: flex; /* Use flexbox for vertical centering */
+            flex-direction: column; /* Stack elements vertically */
+            justify-content: center; /* Center elements vertically */
+        }
+
+        /* Video background */
+        video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover; /* Ensure video covers the whole page */
+            z-index: -1; /* Place video behind all other elements */
+            autoplay: true;
+            muted: true;
+            loop: true;
+        }
+
+        h1 {
+            font-size: 2.5rem; /* Font size for the main title */
+            margin-bottom: 20px; /* Spacing below the title */
+            color: #ff0724; /* Amber color for the title */
+        }
+
+        /* Weather form */
+        #weather-form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #city-input {
+            padding: 10px;
+            border: 1px solid #00796B; /* Teal border color */
+            border-radius: 5px; /* Rounded corners */
+            width: 250px;
+            margin-right: 10px;
+            background-color: rgba(255, 255, 255, 0.3); /* Semi-transparent white background */
+            color: black; /* Black text color */
+        }
+
+        #submit-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            background-color: #00796B; /* Teal background color */
+            color: white; /* White text color */
+            cursor: pointer;
+            font-weight: bold; /* Bold font weight */
+        }
+
+        #submit-btn:hover {
+            background-color: #004D40; /* Darker teal color on hover */
+        }
+
+        /* Weather information section */
+        #weather-info {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #00796B; /* Teal border color */
+            border-radius: 5px; /* Rounded corners */
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+            display: inline-block;
+            width: 300px;
+            text-align: center; /* Align text to the center */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+            margin: 30px auto; /* Center the element on the page */
+        }
+
+        #weather-info h2 {
+            margin-top: 0;
+            color: #FFC107; /* Amber color for the subtitle */
+        }
+
+        #weather-info p {
+            margin: 10px 0;
+            color: white; /* White text for better visibility */
+        }
+
+        /* Weather icons styling */
+        .weather-icon {
+            font-size: 2.5rem; /* Increase icon size */
+            margin-right: 10px; /* Spacing between icon and text */
+            color: #FFCA28; /* Amber color for weather icon */
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Video background -->
+    <video autoplay muted loop>
+        <source src="video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+    <h1>Weather Application</h1>
+    <!-- Weather form for entering city name -->
+    <form id="weather-form">
+        <input type="text" id="city-input" placeholder="Enter city name" required>
+        <button type="submit" id="submit-btn">Get Weather</button>
+    </form>
+
+    <!-- Container for displaying weather information -->
+    <div id="weather-info"></div>
+
+    <!-- JavaScript for fetching and displaying weather data -->
+    <script>
+        // Define constants for HTML elements
+        const cityInput = document.getElementById('city-input');
+        const weatherInfo = document.getElementById('weather-info');
+        const weatherForm = document.getElementById('weather-form');
+
+        // API key from OpenWeatherMap (replace with your own API key)
+        const apiKey = 'f21075e046dab3030302e9f5df886f77';
+
+        // Event listener for form submission
+        weatherForm.addEventListener('submit', function (event) {
+            event.preventDefault(); // Prevents default form submission
+
+            // Get city name from input
+            const cityName = cityInput.value.trim();
+
+            // Validate city name
+            if (cityName === '') {
+                weatherInfo.innerHTML = '<p>Please enter a city name.</p>';
+                return;
+            }
+
+            // Define API URL with city name and API key
+            const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}&units=metric`;
+
+            // Fetch weather data from API
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    // Check for errors in API response
+                    if (data.cod && data.cod !== 200) {
+                        weatherInfo.innerHTML = `<p>Error: ${data.message}</p>`;
+                    } else if (data.main && typeof data.main.temp === 'number') {
+                        // Display weather info if data is available
+                        const weatherHtml = `
+                            <h2>Weather in ${data.name}</h2>
+                            <p><i class="weather-icon ${getWeatherIconClass(data.weather[0].main)}"></i>Temperature: ${data.main.temp}°C</p>
+                            <p>Weather: ${data.weather[0].description}</p>
+                            <p>Humidity: ${data.main.humidity}%</p>
+                            <p>Wind Speed: ${data.wind.speed} m/s</p>
+                        `;
+                        weatherInfo.innerHTML = weatherHtml;
+                    } else {
+                        // Display message if weather data is not available
+                        weatherInfo.innerHTML = '<p>Weather data not available for the specified city.</p>';
+                    }
+                })
+                .catch(error => {
+                    // Display error message if there's an error during fetch
+                    weatherInfo.innerHTML = `<p>Error fetching weather data: ${error.message}</p>`;
+                });
+        });
+
+        // Function to get the CSS class for weather icons based on the weather condition
+        function getWeatherIconClass(weatherCondition) {
+            switch (weatherCondition) {
+                case 'Clear':
+                    return 'fas fa-sun';
+                case 'Clouds':
+                    return 'fas fa-cloud';
+                case 'Rain':
+                    return 'fas fa-cloud-rain';
+                case 'Snow':
+                    return 'fas fa-snowflake';
+                case 'Thunderstorm':
+                    return 'fas fa-bolt';
+                case 'Mist':
+                case 'Fog':
+                    return 'fas fa-smog';
+                default:
+                    return 'fas fa-question';
+            }
+        }
+    </script>
+</body>
+
+</html>
